@@ -1,0 +1,31 @@
+defaults :
+  - physicsnemo_default
+  - arch:
+      - fully_connected
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+arch:
+  fully_connected:
+    activation_fn: tanh
+    nr_layers: 4
+    layer_size: 256
+
+
+optimizer:
+  lr: 0.0001
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+
+training:
+  rec_results_freq: 1000
+  max_steps : 100000
+
+batch_size:
+  bc_inlet: 200
+  bc_outlet: 200
+  interior: 1000
