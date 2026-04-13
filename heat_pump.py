@@ -59,9 +59,9 @@ class CO2GasCooler1D(PDE):
         )
 
         # Momentum balance - removed for now 
-       # self.equations["momentum"] = (
-        #    dp_dx + f * rho * u**2 / (2 * D)
-        #)
+        self.equations["momentum"] = (
+            dp_dx + f * rho * u**2 / (2 * D)
+        )
 
 
 # -----------------------------------
@@ -131,7 +131,7 @@ def run(cfg: PhysicsNeMoConfig) -> None:
         criteria=sympy.Eq(x, 1.0), # change to L_gc if reinstating
         batch_size=cfg.batch_size.bc_max
     )
-    # domain.add_constraint(bc_outlet, "bc_outlet") # outlet commented out for now
+    domain.add_constraint(bc_outlet, "bc_outlet") # outlet commented out for now
 
     # -----------------------
     # Interior Constraints (PDE)
