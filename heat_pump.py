@@ -117,7 +117,7 @@ def run(cfg: PhysicsNeMoConfig) -> None:
         geometry=line,
         outvar={"p": p_in / 1e7, "h": h_in / 1e5}, #added scaling
         criteria=sympy.Eq(x, 0.0),
-        batch_size=cfg.batch_size.bc_min
+        batch_size=cfg.batch_size.bc_inlet
     )
     domain.add_constraint(bc_inlet, "bc_inlet")
 
@@ -129,7 +129,7 @@ def run(cfg: PhysicsNeMoConfig) -> None:
         geometry=line,
         outvar={"p": p_out / 1e7}, # added scaling
         criteria=sympy.Eq(x, 1.0), # change to L_gc if reinstating
-        batch_size=cfg.batch_size.bc_max
+        batch_size=cfg.batch_size.bc_outlet
     )
     domain.add_constraint(bc_outlet, "bc_outlet") # outlet commented out for now
 
