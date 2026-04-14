@@ -148,7 +148,45 @@ def run(cfg: PhysicsNeMoConfig) -> None:
     domain.add_constraint(interior, "interior")
 
     # -----------------------
-    # Validator to go here
+    # Analytical solution / validator
+    # -----------------------
+    
+    x_vals = np.linspace(0, 1, 200).reshape(-1,1)
+    # Parameters (same as above)
+    m_dot = 0.1         # kg/s
+    U = 100.0           # W/m²K
+    P = 0.05            # perimeter (m)
+    D = 0.01            # diameter (m)
+    f = 0.02            # friction factor
+    rho = 800.0
+    cp = 1000.0
+    T_wall = 300.0
+    h_in = 4e5
+    p_in = 8e6
+
+    # Derived enthalpy analytical solution (for this instant)
+    NTU = (U * P) / (m_dot * cp)  # decay constant
+    h_analytical = cp * T_wall + (h_in - cp * T_wall) * np.exp(-NTU * x_vals)
+
+    # Pressure analytical solution (drop off. derived also)
+    u_vel = m_dot / rho
+    dp_dx = -f * rho * u_vel**2 / (2 * D)
+    p_analytical = p_in + dp_dx * x_vals
+
+    from physicsnemo.sym.domain.validator import PointwiseValidator
+
+    validator = PointwiseValidator(
+        nodes=nodes,
+        invar={"x": x_vals},
+        true_outvar={
+            "h": h_analytical / 1e5,   # scaled to match network output
+            "p": p_analytical / 1e7,
+        },
+    )
+    domain.add_validator(validator, "analytical_validator")
+
+    # Don't need to add more values because it is parametric?
+
     # -----------------------
     # Solver
     # -----------------------
