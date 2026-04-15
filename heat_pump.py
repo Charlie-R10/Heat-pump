@@ -158,9 +158,9 @@ def run(cfg: PhysicsNeMoConfig) -> None:
     P = 0.05            # perimeter (m)
     D = 0.01            # diameter (m)
     f = 0.02            # friction factor
-    rho = 800.0
-    cp = 1000.0
-    T_wall = 300.0
+    rho = 284.13
+    cp = 5360.16
+    T_wall = 312.59
     h_in = 4e5
     p_in = 8e6
 
