@@ -99,21 +99,17 @@ class CO2GasCooler1D(PDE):
 
 # C02 node (for derivation)
 
-class CO2PropertyNode(Node):
+from torch import nn
+
+class CO2PropertyNode(nn.Module):
     def __init__(self, T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
+        super().__init__()
         self.T_interp   = T_interp
         self.rho_interp = rho_interp
         self.p_scale    = p_scale
         self.h_scale    = h_scale
 
-        super().__init__(
-            inputs=["p", "h"],
-            outputs=["T_co2", "rho_co2"],
-            name="co2_property_node"
-        )
-
     def forward(self, inputs):
-        # Convert scaled network outputs back to physical values
         p_phys = inputs["p"].detach().cpu().numpy() * self.p_scale
         h_phys = inputs["h"].detach().cpu().numpy() * self.h_scale
 
@@ -123,8 +119,10 @@ class CO2PropertyNode(Node):
         rho_vals = self.rho_interp(pts).reshape(p_phys.shape)
 
         return {
-            "T_co2":   torch.tensor(T_vals,   dtype=inputs["p"].dtype, device=inputs["p"].device),
-            "rho_co2": torch.tensor(rho_vals, dtype=inputs["p"].dtype, device=inputs["p"].device)
+            "T_co2":   torch.tensor(T_vals,   dtype=inputs["p"].dtype, 
+                                    device=inputs["p"].device),
+            "rho_co2": torch.tensor(rho_vals, dtype=inputs["p"].dtype, 
+                                    device=inputs["p"].device)
         }
 
 
@@ -158,7 +156,15 @@ def run(cfg: PhysicsNeMoConfig) -> None:
         cfg=cfg.arch.fully_connected
     )
 
-    property_node = CO2PropertyNode(T_interp, rho_interp) # lookup node
+    # original way, changed to follow PN node pattern
+   ## property_node = CO2PropertyNode(T_interp, rho_interp) # lookup node
+
+    co2_props = CO2PropertyNode(T_interp, rho_interp)
+    property_node = co2_props.make_node(
+      name="co2_property_node",
+      inputs=["p", "h"],
+      outputs=["T_co2", "rho_co2"]
+    ) 
     nodes = (pde.make_nodes() + [net.make_node(name="pinn_network")] + [property_node])
 
     # -----------------------
