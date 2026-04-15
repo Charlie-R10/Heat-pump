@@ -3,6 +3,7 @@ import numpy as np
 import sympy
 from sympy import Symbol, Function
 import torch
+from torch import nn
 import physicsnemo.sym
 from scipy.integrate import solve_ivp
 
