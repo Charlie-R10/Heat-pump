@@ -95,8 +95,8 @@ class CO2GasCooler1D(PDE):
 
         # Momentum balance - removed for now 
         self.equations["momentum"] = (
-            dp_dx + f * rho_sym * u_sym**2 / (2 * D)
-        )
+            dp_dx + f * rho_sym * u_sym**2 / (2 * D) 
+        ) / 1e7 # do we need this scaled?
 
 
 # co2 derviator 
