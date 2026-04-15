@@ -97,17 +97,24 @@ class CO2GasCooler1D(PDE):
             dp_dx + f * rho_sym * u_sym**2 / (2 * D)
         )
 
-# C02 node (for derivation)
-def make_co2_property_node(T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
-    
-    def evaluate(inputs):
-        p_phys = inputs["p"].detach().cpu().numpy() * p_scale
-        h_phys = inputs["h"].detach().cpu().numpy() * h_scale
+
+# co2 derviator 
+class CO2PropertyEvaluator(nn.Module):
+    def __init__(self, T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
+        super().__init__()
+        self.T_interp   = T_interp
+        self.rho_interp = rho_interp
+        self.p_scale    = p_scale
+        self.h_scale    = h_scale
+
+    def forward(self, inputs):
+        p_phys = inputs["p"].detach().cpu().numpy() * self.p_scale
+        h_phys = inputs["h"].detach().cpu().numpy() * self.h_scale
 
         pts = np.column_stack([p_phys.flatten(), h_phys.flatten()])
 
-        T_vals   = T_interp(pts).reshape(p_phys.shape)
-        rho_vals = rho_interp(pts).reshape(p_phys.shape)
+        T_vals   = self.T_interp(pts).reshape(p_phys.shape)
+        rho_vals = self.rho_interp(pts).reshape(p_phys.shape)
 
         return {
             "T_co2":   torch.tensor(T_vals,   dtype=inputs["p"].dtype,
@@ -116,10 +123,12 @@ def make_co2_property_node(T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
                                     device=inputs["p"].device)
         }
 
+def make_co2_property_node(T_interp, rho_interp):
+    evaluator = CO2PropertyEvaluator(T_interp, rho_interp)
     return Node(
         inputs=["p", "h"],
         outputs=["T_co2", "rho_co2"],
-        evaluate=evaluate,
+        evaluate=evaluator,
         name="co2_property_node"
     )
 
