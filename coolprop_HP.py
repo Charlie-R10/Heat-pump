@@ -98,34 +98,30 @@ class CO2GasCooler1D(PDE):
         )
 
 # C02 node (for derivation)
-
-from torch import nn
-
-class CO2PropertyNode(nn.Module):
-    def __init__(self, T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
-        super().__init__()
-        self.T_interp   = T_interp
-        self.rho_interp = rho_interp
-        self.p_scale    = p_scale
-        self.h_scale    = h_scale
-
-    def forward(self, inputs):
-        p_phys = inputs["p"].detach().cpu().numpy() * self.p_scale
-        h_phys = inputs["h"].detach().cpu().numpy() * self.h_scale
+def make_co2_property_node(T_interp, rho_interp, p_scale=1e7, h_scale=1e5):
+    
+    def evaluate(inputs):
+        p_phys = inputs["p"].detach().cpu().numpy() * p_scale
+        h_phys = inputs["h"].detach().cpu().numpy() * h_scale
 
         pts = np.column_stack([p_phys.flatten(), h_phys.flatten()])
 
-        T_vals   = self.T_interp(pts).reshape(p_phys.shape)
-        rho_vals = self.rho_interp(pts).reshape(p_phys.shape)
+        T_vals   = T_interp(pts).reshape(p_phys.shape)
+        rho_vals = rho_interp(pts).reshape(p_phys.shape)
 
         return {
-            "T_co2":   torch.tensor(T_vals,   dtype=inputs["p"].dtype, 
+            "T_co2":   torch.tensor(T_vals,   dtype=inputs["p"].dtype,
                                     device=inputs["p"].device),
-            "rho_co2": torch.tensor(rho_vals, dtype=inputs["p"].dtype, 
+            "rho_co2": torch.tensor(rho_vals, dtype=inputs["p"].dtype,
                                     device=inputs["p"].device)
         }
 
-
+    return Node(
+        inputs=["p", "h"],
+        outputs=["T_co2", "rho_co2"],
+        evaluate=evaluate,
+        name="co2_property_node"
+    )
 
 # -----------------------------------
 # 2. Main Run Function
@@ -159,12 +155,7 @@ def run(cfg: PhysicsNeMoConfig) -> None:
     # original way, changed to follow PN node pattern
    ## property_node = CO2PropertyNode(T_interp, rho_interp) # lookup node
 
-    co2_props = CO2PropertyNode(T_interp, rho_interp)
-    property_node = co2_props.make_node(
-      name="co2_property_node",
-      inputs=["p", "h"],
-      outputs=["T_co2", "rho_co2"]
-    ) 
+    property_node = make_co2_property_node(T_interp, rho_interp)
     nodes = (pde.make_nodes() + [net.make_node(name="pinn_network")] + [property_node])
 
     # -----------------------
