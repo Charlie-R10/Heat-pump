@@ -24,6 +24,7 @@ scheduler:
 training:
   rec_results_freq: 1000
   max_steps : 100000
+  cuda_graphs: false
 
 batch_size:
   bc_inlet: 200
