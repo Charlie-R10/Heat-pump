@@ -40,14 +40,14 @@ class CO2GasCooler1D(PDE):
         dp_dx = p.diff(x) * p_scale
         dh_dx = h.diff(x) * h_scale
 
-        rho = 800  # constant approx (TEMPORARY)
+        rho = 284.13  # from coolprop
         u = m_dot / rho
 
-        # Wall temperature (constant for now)
-        T_wall = 300
+        # Wall temperature (constant for now - from coolprop)
+        T_wall = 312.59
 
         # Simplified T_fluid for now (needs EOS)
-        cp = 1000.0  # J/kgK
+        cp = 5360.16  # J/kgK
         T_fluid = h_phys / cp
 
         # ---- Equations ----
